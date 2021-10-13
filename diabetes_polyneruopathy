@@ -1,0 +1,116 @@
+import pandas as pd
+import numpy as np
+import pickle
+
+drug = pd.read_csv('/mnt/towel/UKBiobank/Clinical/39581/GP/gp_scripts.txt', sep='\t',
+                   encoding='ISO-8859-1', engine='python')
+
+diagnosis = pd.read_csv('/mnt/towel/UKBiobank/Clinical/39581/HES/hesin_diag.txt', sep='\t', 
+                    encoding='ISO-8859-1', engine='python') 
+                    
+diagnosis = diagnosis.dropna(subset = ['diag_icd10'])
+t2_diabetes = diagnosis[diagnosis['diag_icd10'].str.contains('E11')]
+t2_diabetes_list = list(t2_diabetes.drop_duplicates(['eid']).eid) #29267 명 @@@@
+filter_main = t2_diabetes['level'] == 1 
+t2_diabetes[filter_main].drop_duplicates(['eid']) # 1594명
+filter_second = t2_diabetes['level'] == 2 
+t2_diabetes[filter_second].drop_duplicates(['eid'])# 29010명
+
+a = []
+for s in list_1:
+    if s in list_2:
+        a.append(s)
+len(a)
+diagnosis = pd.read_csv('/mnt/towel/UKBiobank/Clinical/39581/HES/hesin_diag.txt', sep='\t', 
+                    encoding='ISO-8859-1', engine='python')  
+#icd9- 값
+diagnosis_2 = diagnosis.dropna(subset = ['diag_icd9'])
+t2_icd9_diabetes = diagnosis_2[diagnosis_2['diag_icd9'].str.contains('25000')]
+t2_icd9_diabetes_list = list(t2_icd9_diabetes.drop_duplicates(['eid']).eid)   #40명 @@@@
+filter_main = t2_icd9_diabetes['level'] == 1 
+t2_icd9_diabetes[filter_main].drop_duplicates(['eid'])  # 18
+filter_main = t2_icd9_diabetes['level'] == 2 
+t2_icd9_diabetes[filter_main].drop_duplicates(['eid'])  #23
+
+
+#diagnosis list 형성
+diag_all_diabetes_list = t2_diabetes_list + t2_icd9_diabetes_list
+diag_all_diabetes_list = list(set(diag_all_diabetes_list)) #29288명
+
+drug = drug.dropna(subset = ['drug_name'])
+glp_filter = drug['drug_name'].str.contains('tide')
+ddp_filter = drug['drug_name'].str.contains('gliptin')
+thiazoli_filter = drug['drug_name'].str.contains('glitazone')
+sglt_filter = drug['drug_name'].str.contains('flozin')
+insulin_filter = drug['drug_name'].str.contains('Insulin')
+mg_filter = drug['drug_name'].str.contains('glinide')
+met_filter = drug['drug_name'].str.contains('Metformin')
+
+glp_drug = drug[glp_filter]
+glp_list = list(glp_drug.drop_duplicates(['eid']).eid)  # 8912, 236가지 약물(용량 다른것 포함)
+
+dpp_drug = drug[ddp_filter]
+dpp_list = list(dpp_drug.drop_duplicates(['eid']).eid)  # 2933
+
+thiazoli_drug = drug[thiazoli_filter]
+thiazoli_list = list(thiazoli_drug.drop_duplicates(['eid']).eid) #2141
+
+sglt_drug = drug[sglt_filter]
+sglt_list = list(sglt_drug.drop_duplicates(['eid']).eid)   #783
+
+insulin_drug = drug[insulin_filter]
+insulin_list = list(insulin_drug.drop_duplicates(['eid']).eid)  #357
+
+mg_drug = drug[mg_filter]
+mg_list = list(mg_drug.drop_duplicates(['eid']).eid) #154
+
+met_drug = drug[met_filter]
+met_list = list(met_drug.drop_duplicates(['eid']).eid) #12662
+
+dia_drug_list = glp_list + dpp_list + thiazoli_list + sglt_list + insulin_list + mg_list + met_list
+dia_drug_list = list(set(dia_drug_list)) #20213리스트 환자 존재
+
+list_all = list(set(dia_drug_list + diag_all_diabetes_list))
+len(list_all)  # 40949명
+
+diagnosis = pd.read_csv('/mnt/towel/UKBiobank/Clinical/39581/HES/hesin_diag.txt', sep='\t', 
+                    encoding='ISO-8859-1', engine='python')
+diagnosis = diagnosis[diagnosis['eid'].isin(list_all)]
+diagnosis = diagnosis.dropna(subset = ['diag_icd10'])
+poly_neuro_1 = diagnosis[diagnosis['diag_icd10'].str.contains('G629')] #polyneuropathy unspecified
+p1_list = list(poly_neuro_1.drop_duplicates(['eid']).eid) #593
+poly_neuro_2 = diagnosis[diagnosis['diag_icd10'].str.contains('G632')] # diabetic polyneuropathy
+p2_list = list(poly_neuro_2.drop_duplicates(['eid']).eid) #654
+poly_neuro_3 = diagnosis[diagnosis['diag_icd10'].str.contains('E114')] # type 2 diabetes mellitus with neurological complications
+p3_list = list(poly_neuro_3.drop_duplicates(['eid']).eid) #815
+
+poly_neuro = list(set(p1_list + p2_list + p3_list))    ##1307명
+
+diagnosis = pd.read_csv('/mnt/towel/UKBiobank/Clinical/39581/HES/hesin_diag.txt', sep='\t', 
+                    encoding='ISO-8859-1', engine='python')  
+#icd9- 값
+diagnosis_2 = diagnosis.dropna(subset = ['diag_icd9'])
+p1_9_neuro = diagnosis_2[diagnosis_2['diag_icd9'].str.contains('35790')] #357.9
+p1_9_list = list(p1_9_neuro.drop_duplicates(['eid']).eid) #0
+p2_9_neuro = diagnosis_2[diagnosis_2['diag_icd9'].str.contains('35740')] #357.4 (따로 없음 그냥 모두 G63)
+p2_9_list = list(p2_9_neuro.drop_duplicates(['eid']).eid) #0
+p3_9_neuro = diagnosis_2[diagnosis_2['diag_icd9'].str.contains('25060')] #25060
+p3_9_list = list(p3_9_neuro.drop_duplicates(['eid']).eid) #0
+poly_9_neuro = list(set(p1_9_list + p2_9_list + p3_9_list))
+
+poly_diag_list = list(set(poly_neuro + poly_9_neuro))
+len(poly_diag_list)#1307명
+
+drug = pd.read_csv('/mnt/towel/UKBiobank/Clinical/39581/GP/gp_scripts.txt', sep='\t',
+                   encoding='ISO-8859-1', engine='python')
+drug = drug[drug['eid'].isin(list_all)]
+drug2 = drug.dropna(subset = ['read_2'])
+dulo = drug2[drug2['read_2'].str.contains('gde')]# gde를 가지는 약물은 duloxetine계열
+dulo_list = list(dulo.drop_duplicates(['eid']).eid) #193
+gaba = drug2[drug2['read_2'].str.contains('dnj')] # dnj는 gabapentin
+gaba_list = list(gaba.drop_duplicates(['eid']).eid) # 671
+prega = drug2[drug2['read_2'].str.contains('dnp')] #dnp는 pregabalin
+prega_list = list(prega.drop_duplicates(['eid']).eid) #352
+poly_drug_list = list(set(dulo_list + gaba_list + prega_list))  #903명
+
+list_all_poly = list(set(poly_diag_list + poly_drug_list))
